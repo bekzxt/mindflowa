@@ -5,7 +5,11 @@ import { DailyCheckIn } from './presentation/pages/DailyCheckIn';
 import { Dashboard } from './presentation/pages/Dashboard';
 import { Loader2 } from 'lucide-react';
 
-function App() {
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HistoryPage } from './presentation/pages/HistoryPage';
+import { AnalyticsPage } from './presentation/pages/AnalyticsPage';
+
+function AppContent() {
   const { loadDayPlan, dayPlan, isLoading, currentDate } = useAppStore();
 
   useEffect(() => {
@@ -22,20 +26,29 @@ function App() {
     );
   }
 
-  // If no energy level set for today, show check-in
-  if (!dayPlan || !dayPlan.energyLevel) {
-    return (
-      <Layout>
-        <DailyCheckIn />
-      </Layout>
-    );
-  }
+  // If no energy level set for today, we might want to force check-in
+  // But routing handles pages. 
+  // Strategy: "/" is Dashboard. If no energy, Dashboard shows CheckIn.
 
-  // Otherwise show Dashboard
   return (
     <Layout>
-      <Dashboard />
+      <Routes>
+        <Route path="/" element={
+          (!dayPlan || !dayPlan.energyLevel) ? <DailyCheckIn /> : <Dashboard />
+        } />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Layout>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

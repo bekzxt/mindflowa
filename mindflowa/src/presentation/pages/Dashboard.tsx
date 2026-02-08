@@ -9,13 +9,25 @@ import { Plus, CheckCircle2, Circle, AlertTriangle } from 'lucide-react';
 import type { Effort, Task } from '../../domain/entities/Task';
 import { EFFORT_VALUES } from '../../domain/entities/Task';
 import { clsx } from 'clsx';
-import { format } from 'date-fns';
+import { format, addDays, subDays } from 'date-fns';
+import confetti from 'canvas-confetti';
+import { MotivationalQuote } from '../components/MotivationalQuote';
 
 export const Dashboard: React.FC = () => {
-    const { dayPlan, addTask, toggleTaskCompletion, currentDate } = useAppStore();
+    const { dayPlan, addTask, toggleTaskCompletion, currentDate, loadDayPlan } = useAppStore();
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [newTaskEffort, setNewTaskEffort] = useState<Effort>('medium');
     const [isAdding, setIsAdding] = useState(false);
+
+    const handlePrevDay = () => {
+        const newDate = subDays(new Date(currentDate), 1);
+        loadDayPlan(format(newDate, 'yyyy-MM-dd'));
+    };
+
+    const handleNextDay = () => {
+        const newDate = addDays(new Date(currentDate), 1);
+        loadDayPlan(format(newDate, 'yyyy-MM-dd'));
+    };
 
     if (!dayPlan) return null;
 
@@ -43,6 +55,20 @@ export const Dashboard: React.FC = () => {
         await addTask(newTaskTitle, newTaskEffort, currentDate);
         setNewTaskTitle('');
         setIsAdding(false);
+        await addTask(newTaskTitle, newTaskEffort, currentDate);
+        setNewTaskTitle('');
+        setIsAdding(false);
+    };
+
+    const handleToggleTask = async (task: Task) => {
+        if (!task.isCompleted) {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+        await toggleTaskCompletion(task.id);
     };
 
     return (
@@ -50,8 +76,16 @@ export const Dashboard: React.FC = () => {
             {/* Header / Stats */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold">{format(new Date(dayPlan.date), 'EEEE, MMM d')}</h2>
-                    <p className="text-muted-foreground capitalize">Energy: {dayPlan.energyLevel}</p>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={handlePrevDay}>
+                            &lt;
+                        </Button>
+                        <h2 className="text-2xl font-bold text-red-600">{format(new Date(dayPlan.date), 'EEEE, MMM d')}</h2>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={handleNextDay}>
+                            &gt;
+                        </Button>
+                    </div>
+                    <p className="text-muted-foreground capitalize ml-10">Energy: {dayPlan.energyLevel}</p>
                 </div>
                 {dayPlan.isUrgentMinimumMode && (
                     <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-red-200">
@@ -59,6 +93,9 @@ export const Dashboard: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Motivational Quote */}
+            {dayPlan.energyLevel && <MotivationalQuote energyLevel={dayPlan.energyLevel} />}
 
             {/* Capacity Card */}
             <Card className="glass-card border-none shadow-md">
@@ -90,7 +127,7 @@ export const Dashboard: React.FC = () => {
                             dayPlan.isUrgentMinimumMode && !task.isCompleted ? "border-red-200" : ""
                         )}>
                             <div className="flex items-center gap-3 overflow-hidden">
-                                <button onClick={() => toggleTaskCompletion(task.id)} className="text-primary hover:scale-110 transition-transform">
+                                <button onClick={() => handleToggleTask(task)} className="text-primary hover:scale-110 transition-transform">
                                     {task.isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
                                 </button>
                                 <div className="truncate">

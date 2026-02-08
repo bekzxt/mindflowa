@@ -23,4 +23,10 @@ export class LocalPlanRepository implements PlanRepository {
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
     }
+
+    async getAllPlans(): Promise<DayPlan[]> {
+        const data = localStorage.getItem(STORAGE_KEY);
+        const plans: DayPlan[] = data ? JSON.parse(data) : [];
+        return plans.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
 }

@@ -28,6 +28,7 @@ interface AppState {
     addTask: (title: string, effort: Effort, deadline: string, scheduledDate?: string) => Promise<void>;
     toggleTaskCompletion: (taskId: string) => Promise<void>;
     setReflection: (rating: 'yes' | 'partially' | 'no') => Promise<void>;
+    loadHistory: () => Promise<DayPlan[]>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -113,5 +114,9 @@ export const useAppStore = create<AppState>((set, get) => ({
             await planRepo.saveDayPlan(dayPlan);
             set({ dayPlan: { ...dayPlan } }); // Trigger update
         }
+    },
+
+    loadHistory: async () => {
+        return await planRepo.getAllPlans();
     }
 }));
